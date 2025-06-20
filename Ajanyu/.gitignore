@@ -1,0 +1,38 @@
+# 🐍 Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+
+# 🧪 Testing
+.coverage
+*.cover
+coverage.xml
+htmlcov/
+.cache/
+.pytest_cache/
+
+# 🔐 Environment variables
+.env
+
+# 📦 Package/venv
+.venv/
+env/
+venv/
+*.log
+
+# 🧠 IDE/editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# 📚 Jupyter
+.ipynb_checkpoints/
+
+# ⚙️ OS
+Thumbs.db
+
