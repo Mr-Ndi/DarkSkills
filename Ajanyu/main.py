@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from scraper.jobs import scrape_jobs
+from scraper.jobs import scrape_jobs_with_selenium
 from airtable.uploader import upload_to_airtable
 
 load_dotenv()
@@ -11,8 +11,8 @@ def main():
         print("TARGET_URL not set in .env")
         return
 
-    print(f"Scraping jobs from: {url}")
-    jobs = scrape_jobs(url)
+    # print(f"Scraping jobs from: {url}")
+    jobs = scrape_jobs_with_selenium(url)
     print(f"Found {len(jobs)} jobs.")
 
     if jobs:

@@ -1,50 +1,71 @@
-import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from bs4 import BeautifulSoup
+import time
+from urllib.parse import urlparse
 
-def fetch_jobs_from_api():
-    url = "https://opportunity.ini.rw/api/opportunities?locale=en&limit=20&offset=0&type=job"
-    print(f"Scraping jobs from: {url}")
+def scrape_jobs_with_selenium(target_url):
+    print(f"Scraping jobs from: {target_url}")
+
+    # Set up headless Chrome
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    driver = webdriver.Chrome(options=options)
 
     try:
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
-    except requests.RequestException as e:
-        print(f"Failed to fetch data: {e}")
-        return []
-    except ValueError:
-        print("Failed to parse JSON response.")
-        return []
+        driver.get(target_url)
+        time.sleep(5)  # Give time for JavaScript to load content
 
-    items = data.get("data", [])
-    if not items:
-        print("No jobs found in API response.")
-        return []
+        soup = BeautifulSoup(driver.page_source, "html.parser")
 
-    jobs = []
-    for item in items:
-        title = item.get("title")
-        slug = item.get("slug")
-        company = item.get("company", {}).get("name")
-        job_type = item.get("job_type")
-        location = item.get("location")
-        posted_date = item.get("posted_at")
+        # Dynamically extract base URL
+        parsed_url = urlparse(target_url)
+        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
 
-        if not title or not slug:
-            print(f"[!] Skipped due to missing data: {title or 'N/A'}")
-            continue
+        job_cards = soup.select('div.bg-card')
+        if not job_cards:
+            print("No job cards found.")
+            return []
 
-        job = {
-            "Title": title,
-            "Link": f"https://opportunity.ini.rw/en/opportunities/{slug}",
-            "Company": company or "N/A",
-            "Type": job_type or "N/A",
-            "Location": location or "N/A",
-        }
+        jobs = []
+        for card in job_cards:
+            title_elem = card.select_one("h2") or card.select_one("h3")
+            company_elem = card.select_one("div:has(svg) + div")
+            type_elem = card.select_one("span.rounded-full")
+            location_elem = card.select_one("div:contains('Rwanda')")
+            date_elem = card.select_one("div:contains('Posted:')")
+            link_elem = card.select_one("a[href*='/opportunities/']")
 
-        if posted_date:
-            job["Posted Date"] = posted_date
+            title = title_elem.get_text(strip=True) if title_elem else "N/A"
+            company = company_elem.get_text(strip=True) if company_elem else "N/A"
+            job_type = type_elem.get_text(strip=True) if type_elem else "N/A"
+            location = location_elem.get_text(strip=True) if location_elem else "N/A"
+            link = base_url + link_elem["href"] if link_elem else "N/A"
 
-        jobs.append(job)
+            posted_date = None
+            if date_elem and "Posted:" in date_elem.text:
+                posted_date = date_elem.text.replace("Posted:", "").strip()
 
-    print(f"Found {len(jobs)} jobs.")
-    return jobs
+            if not title or not link or title == "N/A" or link == "N/A":
+                print(f"[!] Skipped due to missing title/link: {title}")
+                continue
+
+            job = {
+                "Title": title,
+                "Type": job_type,
+                "Company": company,
+                "Location": location,
+                "Link": link,
+            }
+            if posted_date:
+                job["Posted Date"] = posted_date
+
+            jobs.append(job)
+
+        print(f"Found {len(jobs)} jobs.")
+        return jobs
+
+    finally:
+        driver.quit()
