@@ -1,24 +1,22 @@
-import requests
 import os
+from dotenv import load_dotenv
 
-AIRTABLE_API_KEY = os.getenv("AIRTABLE_API_KEY")
-BASE_ID = "your_base_id"
-TABLE_NAME = "your_table_name"
+from scraper.jobs import scrape_jobs
+from airtable.uploader import upload_to_airtable
 
-def upload_to_airtable(jobs):
-    url = f"https://api.airtable.com/v0/{BASE_ID}/{TABLE_NAME}"
-    headers = {
-        "Authorization": f"Bearer {AIRTABLE_API_KEY}",
-        "Content-Type": "application/json"
-    }
+load_dotenv()
+def main():
+    url = os.getenv("TARGET_URL")
+    print(f"Scraping jobs from: {url}")
+    
+    jobs = scrape_jobs(url)
+    print(f"Found {len(jobs)} jobs.")
 
-    for job in jobs:
-        data = {
-            "fields": {
-                "Title": job["title"],
-                "Type": job["type"]
-            }
-        }
-        response = requests.post(url, json=data, headers=headers)
-        if response.status_code != 200:
-            print(f"Failed to upload: {job['title']}, Error: {response.text}")
+    if jobs:
+        upload_to_airtable(jobs)
+        print("Upload complete.")
+    else:
+        print("No jobs to upload.")
+
+if __name__ == "__main__":
+    main()
