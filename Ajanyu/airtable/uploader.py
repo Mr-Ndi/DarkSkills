@@ -19,21 +19,22 @@ def upload_to_airtable(jobs):
     }
 
     for job in jobs:
-        if not job.get("Title") or not job.get("Link"):
-            print("Skipping job with missing title or link.")
+        # Skip job if any field is "N/A"
+        if any(value == "N/A" for value in job.values()):
+            print(f"[!] Skipped due to 'N/A': {job.get('Title', 'Unknown')}")
             continue
 
         data = {
             "fields": {
-                "Title": job.get("Title"),
-                "Type": job.get("Type"),
-                "Company": job.get("Company"),
-                "Link": job.get("Link"),
-                "Location": job.get("Location"),
+                "Title": job["Title"],
+                "Type": job["Type"],
+                "Company": job["Company"],
+                "Link": job["Link"],
+                "Location": job["Location"]
             }
         }
 
-        if job.get("Posted Date"):
+        if "Posted Date" in job:
             data["fields"]["Posted Date"] = job["Posted Date"]
 
         response = requests.post(url, json=data, headers=headers)
