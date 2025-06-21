@@ -19,19 +19,26 @@ def upload_to_airtable(jobs):
     }
 
     for job in jobs:
+        if not job.get("Title") or not job.get("Link"):
+            print("Skipping job with missing title or link.")
+            continue
+
         data = {
             "fields": {
-                "Title": job["Title"],
-                "Type": job["Type"],
-                "Company": job["Company"],
-                "Link": job["Link"],
-                "Location": job["Location"],
-                "Posted Date": job["Posted Date"]
+                "Title": job.get("Title"),
+                "Type": job.get("Type"),
+                "Company": job.get("Company"),
+                "Link": job.get("Link"),
+                "Location": job.get("Location"),
             }
         }
 
+        if job.get("Posted Date"):
+            data["fields"]["Posted Date"] = job["Posted Date"]
+
         response = requests.post(url, json=data, headers=headers)
-        if response.status_code != 200:
-            print(f"Failed to upload: {job['Title']}, Error: {response.text}")
+
+        if response.status_code == 201:
+            print(f"[✓] Uploaded: {job['Title']}")
         else:
-            print(f"Uploaded: {job['Title']}")
+            print(f"[✗] Failed: {job['Title']} → {response.status_code}: {response.text}")
