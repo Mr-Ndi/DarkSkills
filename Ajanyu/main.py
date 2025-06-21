@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from scraper.jobs import scrape_jobs_with_selenium
+from scraper.jobs import scrape_jobs_with_playwright
 from airtable.uploader import upload_to_airtable
 
 load_dotenv()
@@ -12,7 +12,7 @@ def main():
         return
 
     # print(f"Scraping jobs from: {url}")
-    jobs = scrape_jobs_with_selenium(url)
+    jobs = scrape_jobs_with_playwright(url)
     print(f"Found {len(jobs)} jobs.")
 
     if jobs:

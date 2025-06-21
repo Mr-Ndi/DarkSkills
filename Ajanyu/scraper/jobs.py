@@ -1,28 +1,24 @@
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.firefox.service import Service
+from playwright.sync_api import sync_playwright
 from bs4 import BeautifulSoup
-import time
 from urllib.parse import urlparse
+import time
 
-def scrape_jobs_with_selenium(target_url):
+def scrape_jobs_with_playwright(target_url):
     print(f"Scraping jobs from: {target_url}")
 
-    # Set up Firefox in headless mode
-    options = Options()
-    options.add_argument("--headless")
-    service = Service("/usr/local/bin/geckodriver")
-    driver = webdriver.Firefox(service=service, options=options)
+    with sync_playwright() as p:
+        browser = p.firefox.launch(headless=True)
+        page = browser.new_page()
 
-    try:
-        driver.get(target_url)
-        time.sleep(25)  # Let JS-rendered content load
+        page.goto(target_url)
+        page.wait_for_selector("div.bg-card")  # Ensure cards are rendered
+        time.sleep(20)  # Optional: let animations/render finish
 
-        soup = BeautifulSoup(driver.page_source, "html.parser")
+        html = page.content()
+        soup = BeautifulSoup(html, "html.parser")
         parsed_url = urlparse(target_url)
         base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
 
-        # Get each job card container
         job_cards = soup.select("div.bg-card")
         if not job_cards:
             print("No job cards found.")
@@ -63,9 +59,6 @@ def scrape_jobs_with_selenium(target_url):
 
             jobs.append(job)
 
+        browser.close()
         print(f"Found {len(jobs)} jobs.")
         return jobs
-
-    finally:
-        driver.quit()
-        print("Web driver closed.")
