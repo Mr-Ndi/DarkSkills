@@ -18,9 +18,8 @@ htmlcov/
 .env
 
 # 📦 Package/venv
-.venv/
-env/
-venv/
+.ajanyu/
+
 *.log
 
 # 🧠 IDE/editor settings
