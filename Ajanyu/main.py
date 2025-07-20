@@ -1,25 +1,24 @@
-import os
-from dotenv import load_dotenv
-from scraper.jobs import scrape_jobs_with_playwright
-from airtable.uploader import upload_to_airtable
+from selenium import webdriver
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.options import Options
+import time
 
-load_dotenv()
+# Set up Firefox options
+options = Options()
+options.binary_location = "/home/me/firefox-esr/firefox/firefox"  # <- Adjust if your username/path differs
 
-def main():
-    url = os.getenv("TARGET_URL")
-    if not url:
-        print("TARGET_URL not set in .env")
-        return
+# Path to geckodriver (system-installed or snap-installed one)
+service = Service("/snap/bin/geckodriver")
 
-    # print(f"Scraping jobs from: {url}")
-    jobs = scrape_jobs_with_playwright(url)
-    print(f"Found {len(jobs)} jobs.")
+# Launch browser
+driver = webdriver.Firefox(service=service, options=options)
 
-    if jobs:
-        upload_to_airtable(jobs)
-        print("Upload complete.")
-    else:
-        print("No jobs to upload.")
+# Open a page
+driver.get("https://opportunity.ini.rw/")
+time.sleep(3)
 
-if __name__ == "__main__":
-    main()
+# Print the page title
+print("Page title:", driver.title)
+
+# Close the browser
+driver.quit()
