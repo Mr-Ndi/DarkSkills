@@ -1,24 +1,38 @@
+import os
+import time
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
-import time
+from dotenv import load_dotenv
+
+# Load environment variables from .env file if present
+load_dotenv()
 
 # Set up Firefox options
 options = Options()
-options.binary_location = "/home/me/firefox-esr/firefox/firefox"  # <- Adjust if your username/path differs
+options.binary_location = os.getenv("FIREFOX_BIN", "/home/me/firefox-esr/firefox/firefox")
 
-# Path to geckodriver (system-installed or snap-installed one)
-service = Service("/snap/bin/geckodriver")
+# Set up GeckoDriver service
+geckodriver_path = os.getenv("GECKODRIVER_PATH", "/snap/bin/geckodriver")
+service = Service(geckodriver_path)
 
-# Launch browser
-driver = webdriver.Firefox(service=service, options=options)
+driver = None  # So we can reference it in finally
 
-# Open a page
-driver.get("https://opportunity.ini.rw/")
-time.sleep(3)
+try:
+    # Launch browser
+    driver = webdriver.Firefox(service=service, options=options)
 
-# Print the page title
-print("Page title:", driver.title)
+    # Open a page
+    driver.get("https://opportunity.ini.rw/")
+    time.sleep(3)
 
-# Close the browser
-driver.quit()
+    # Print the page title
+    print("Page title:", driver.title)
+
+except Exception as e:
+    print("❌ An error occurred:", e)
+
+finally:
+    if driver:
+        driver.quit()
+        print("✅ Browser closed.")
