@@ -18,11 +18,17 @@ def upload_to_airtable(jobs):
         "Content-Type": "application/json"
     }
 
+    required_keys = ["Title", "Type", "Company", "Link", "Location"]
+
     for job in jobs:
-        # Skip job if any field is "N/A"
-        if any(value == "N/A" for value in job.values()):
-            print(f"[!] Skipped due to 'N/A': {job.get('Title', 'Unknown')}")
+        # Skip if any required key is missing or its value is "N/A"
+        if not all(key in job and job[key] != "N/A" for key in required_keys):
+            print(f"[!] Skipped incomplete job: {job}")
             continue
+
+        # ✅ Fix duplicate link prefix
+        if job["Link"].count("https://opportunity.ini.rw") > 1:
+            job["Link"] = job["Link"].replace("https://opportunity.ini.rw", "", 1)
 
         data = {
             "fields": {
@@ -42,4 +48,4 @@ def upload_to_airtable(jobs):
         if response.status_code == 201:
             print(f"[✓] Uploaded: {job['Title']}")
         else:
-            print(f"[✗] Failed: {job['Title']} → {response.status_code}: {response.text}")
+            print(f"[✗] Failed: {job.get('Title', 'Unknown')} → {response.status_code}: {response.text}")
