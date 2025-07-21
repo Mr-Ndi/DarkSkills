@@ -1,38 +1,36 @@
 import os
-import time
-from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
-from selenium.webdriver.firefox.options import Options
 from dotenv import load_dotenv
+from scraper.jobs import scrape_jobs
+from airtable.uploader import upload_to_airtable
 
-# Load environment variables from .env file if present
 load_dotenv()
 
-# Set up Firefox options
-options = Options()
-options.binary_location = os.getenv("FIREFOX_BIN", "/home/me/firefox-esr/firefox/firefox")
+FIREFOX_BIN = os.getenv("FIREFOX_BIN", "/home/me/firefox-esr/firefox/firefox")
+GECKODRIVER_PATH = os.getenv("GECKODRIVER_PATH", "/snap/bin/geckodriver")
 
-# Set up GeckoDriver service
-geckodriver_path = os.getenv("GECKODRIVER_PATH", "/snap/bin/geckodriver")
-service = Service(geckodriver_path)
+if __name__ == "__main__":
+    raw_jobs = scrape_jobs(FIREFOX_BIN, GECKODRIVER_PATH)
 
-driver = None  # So we can reference it in finally
+    # Normalize keys to match Airtable expectations
+    normalized_jobs = []
+    for job in raw_jobs:
+        normalized_jobs.append({
+            "Title": job.get("title", "N/A"),
+            "Company": job.get("company", "N/A"),
+            "Location": job.get("location", "N/A"),
+            "Type": job.get("contract", "N/A"),
+            "Posted Date": job.get("date_posted", "N/A"),
+            "Link": job.get("url", "N/A")
+        })
 
-try:
-    # Launch browser
-    driver = webdriver.Firefox(service=service, options=options)
+    upload_to_airtable(normalized_jobs)
 
-    # Open a page
-    driver.get("https://opportunity.ini.rw/")
-    time.sleep(3)
-
-    # Print the page title
-    print("Page title:", driver.title)
-
-except Exception as e:
-    print("❌ An error occurred:", e)
-
-finally:
-    if driver:
-        driver.quit()
-        print("✅ Browser closed.")
+    # Debbugging tools
+#     print(f"✅ Scraped {len(jobs)} jobs")
+#     for job in jobs:
+#         print(f"""
+# 📌 {job['title']} @ {job['company']}
+# 📍 {job['location']} | {job['contract']} | {job['deadline']}
+# 🗓️  Posted: {job['date_posted']}
+# 🔗 {job['url']}
+#         """)
