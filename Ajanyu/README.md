@@ -99,7 +99,7 @@ docker run --env-file .env ajanyu
 * 🔌 Airtable API Integration
 * 🔁 Automation
 * 🐍 Python 3
-* 🍲 BeautifulSoup4
+* 🍲 Selanium
 * 🐳 Docker
 
 ---
