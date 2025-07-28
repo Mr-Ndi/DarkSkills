@@ -1,17 +1,33 @@
-# Base Python image
-FROM python:3.12.11-slim-bullseye
+FROM python:3.11-slim
 
-# Set work directory
 WORKDIR /app
 
-# Copy project files
-COPY . .
+# Install Firefox dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    unzip \
+    curl \
+    firefox-esr \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
+# Install Geckodriver manually
+ENV GECKODRIVER_VERSION=v0.34.0
+
+RUN wget -q "https://github.com/mozilla/geckodriver/releases/download/${GECKODRIVER_VERSION}/geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz" \
+    && tar -xzf "geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz" \
+    && mv geckodriver /usr/local/bin/ \
+    && chmod +x /usr/local/bin/geckodriver \
+    && rm "geckodriver-${GECKODRIVER_VERSION}-linux64.tar.gz"
+
+# Copy project files
+COPY . /app
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Set environment variables (optional, use .env in production)
+# Set environment variable for unbuffered logs
 ENV PYTHONUNBUFFERED=1
 
-# Entrypoint
+# Default command
 CMD ["python", "main.py"]
