@@ -13,7 +13,7 @@ def scrape_jobs(firefox_binary, geckodriver_path):
 
     try:
         driver.get("https://opportunity.ini.rw/")
-        time.sleep(5)
+        time.sleep(15)
 
         print("🌐 Page loaded.")
         job_cards = driver.find_elements(By.CSS_SELECTOR, "div[data-slot='card']")
